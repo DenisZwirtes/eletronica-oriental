@@ -14,7 +14,7 @@ class ActivityLoggerService
     public function log(string $action, string $description, ?User $user = null, array $context = []): void
     {
         $user = $user ?? Auth::user();
-        
+
         Log::create([
             'user_id' => $user?->id,
             'action' => $action,
@@ -52,36 +52,39 @@ class ActivityLoggerService
     /**
      * Registra criação de registro
      */
-    public function logCreate(string $model, string $description, ?User $user = null): void
+    public function logCreate(string $model, string $description, array $context = [], ?User $user = null): void
     {
         $this->log(
             'create',
             "Criado {$model}: {$description}",
-            $user
+            $user,
+            $context
         );
     }
 
     /**
      * Registra atualização de registro
      */
-    public function logUpdate(string $model, string $description, ?User $user = null): void
+    public function logUpdate(string $model, string $description, array $context = [], ?User $user = null): void
     {
         $this->log(
             'update',
             "Atualizado {$model}: {$description}",
-            $user
+            $user,
+            $context
         );
     }
 
     /**
      * Registra exclusão de registro
      */
-    public function logDelete(string $model, string $description, ?User $user = null): void
+    public function logDelete(string $model, string $description, array $context = [], ?User $user = null): void
     {
         $this->log(
             'delete',
             "Excluído {$model}: {$description}",
-            $user
+            $user,
+            $context
         );
     }
 
@@ -106,4 +109,4 @@ class ActivityLoggerService
             ->limit($limit)
             ->get();
     }
-} 
+}

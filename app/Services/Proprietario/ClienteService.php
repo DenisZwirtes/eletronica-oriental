@@ -3,9 +3,10 @@
 namespace App\Services\Proprietario;
 
 use App\Models\Cliente;
+use App\DTOs\ClienteDTO;
 use App\Services\Common\ActivityLoggerService;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ClienteService
 {
@@ -14,156 +15,183 @@ class ClienteService
     ) {}
 
     /**
-     * Lista todos os clientes com paginação
+     * Lista todos os clientes com paginação.
+     *
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
-    public function listarClientes(int $perPage = 15): LengthAwarePaginator
+    public function listarClientes(int $perPage = 15)
     {
-        return Cliente::with(['ordensServico', 'orcamentos'])
+        return Cliente::query()
             ->orderBy('nome')
             ->paginate($perPage);
     }
 
     /**
-     * Busca clientes por termo
+     * Busca clientes por termo de pesquisa.
+     *
+     * @param string $termo
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
-    public function buscarClientes(string $termo, int $perPage = 15): LengthAwarePaginator
+    public function buscarClientes(string $termo, int $perPage = 15)
     {
-        return Cliente::where('nome', 'like', "%{$termo}%")
+        return Cliente::query()
+            ->where('nome', 'like', "%{$termo}%")
             ->orWhere('email', 'like', "%{$termo}%")
             ->orWhere('telefone', 'like', "%{$termo}%")
             ->orWhere('cpf_cnpj', 'like', "%{$termo}%")
-            ->with(['ordensServico', 'orcamentos'])
             ->orderBy('nome')
             ->paginate($perPage);
     }
 
     /**
-     * Cria um novo cliente
+     * Cria um novo cliente usando DTO.
+     *
+     * @param ClienteDTO $dto
+     * @return Cliente
      */
-    public function criarCliente(array $dados): Cliente
+    public function criarCliente(ClienteDTO $dto): Cliente
     {
-        $cliente = Cliente::create([
-            'nome' => $dados['nome'],
-            'email' => $dados['email'],
-            'telefone' => $dados['telefone'],
-            'cpf_cnpj' => $dados['cpf_cnpj'] ?? null,
-            'endereco' => $dados['endereco'] ?? null,
-            'cidade' => $dados['cidade'] ?? null,
-            'estado' => $dados['estado'] ?? null,
-            'cep' => $dados['cep'] ?? null,
-            'observacoes' => $dados['observacoes'] ?? null,
-        ]);
+        try {
+            DB::beginTransaction();
 
-        $this->activityLogger->logCreate(
-            'Cliente',
-            "Cliente {$cliente->nome} criado"
-        );
+            $cliente = Cliente::create($dto->toArray());
 
-        return $cliente;
+            $this->activityLogger->logCreate(
+                'cliente',
+                "Cliente '{$cliente->nome}' criado com sucesso",
+                ['cliente_id' => $cliente->id]
+            );
+
+            DB::commit();
+
+            return $cliente;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erro ao criar cliente: ' . $e->getMessage());
+            throw $e;
+        }
     }
 
     /**
-     * Atualiza um cliente
+     * Atualiza um cliente existente usando DTO.
+     *
+     * @param int $id
+     * @param ClienteDTO $dto
+     * @return Cliente
      */
-    public function atualizarCliente(Cliente $cliente, array $dados): bool
+    public function atualizarCliente(int $id, ClienteDTO $dto): Cliente
     {
-        $nomeAnterior = $cliente->nome;
+        try {
+            DB::beginTransaction();
 
-        $cliente->update([
-            'nome' => $dados['nome'],
-            'email' => $dados['email'],
-            'telefone' => $dados['telefone'],
-            'cpf_cnpj' => $dados['cpf_cnpj'] ?? null,
-            'endereco' => $dados['endereco'] ?? null,
-            'cidade' => $dados['cidade'] ?? null,
-            'estado' => $dados['estado'] ?? null,
-            'cep' => $dados['cep'] ?? null,
-            'observacoes' => $dados['observacoes'] ?? null,
-        ]);
+            $cliente = Cliente::findOrFail($id);
+            $cliente->update($dto->toArray());
 
-        $this->activityLogger->logUpdate(
-            'Cliente',
-            "Cliente {$nomeAnterior} atualizado"
-        );
+            $this->activityLogger->logUpdate(
+                'cliente',
+                "Cliente '{$cliente->nome}' atualizado com sucesso",
+                ['cliente_id' => $cliente->id]
+            );
 
-        return true;
+            DB::commit();
+
+            return $cliente;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erro ao atualizar cliente: ' . $e->getMessage());
+            throw $e;
+        }
     }
 
     /**
-     * Exclui um cliente
+     * Exclui um cliente.
+     *
+     * @param int $id
+     * @return bool
      */
-    public function excluirCliente(Cliente $cliente): bool
+    public function excluirCliente(int $id): bool
     {
-        $nome = $cliente->nome;
+        try {
+            DB::beginTransaction();
 
-        $cliente->delete();
+            $cliente = Cliente::findOrFail($id);
+            $nomeCliente = $cliente->nome;
+            
+            $cliente->delete();
 
-        $this->activityLogger->logDelete(
-            'Cliente',
-            "Cliente {$nome} excluído"
-        );
+            $this->activityLogger->logDelete(
+                'cliente',
+                "Cliente '{$nomeCliente}' excluído com sucesso",
+                ['cliente_id' => $id]
+            );
 
-        return true;
+            DB::commit();
+
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erro ao excluir cliente: ' . $e->getMessage());
+            throw $e;
+        }
     }
 
     /**
-     * Obtém cliente por ID
+     * Busca um cliente por ID.
+     *
+     * @param int $id
+     * @return Cliente
      */
-    public function obterCliente(int $id): ?Cliente
+    public function buscarCliente(int $id): Cliente
     {
-        return Cliente::with(['ordensServico', 'orcamentos'])->find($id);
+        return Cliente::findOrFail($id);
     }
 
     /**
-     * Obtém estatísticas dos clientes
+     * Ativa/desativa um cliente.
+     *
+     * @param int $id
+     * @return Cliente
      */
-    public function obterEstatisticas(): array
+    public function toggleStatus(int $id): Cliente
+    {
+        try {
+            DB::beginTransaction();
+
+            $cliente = Cliente::findOrFail($id);
+            $cliente->ativo = !$cliente->ativo;
+            $cliente->save();
+
+            $acao = $cliente->ativo ? 'ativado' : 'desativado';
+            $this->activityLogger->logUpdate(
+                'cliente',
+                "Cliente '{$cliente->nome}' {$acao}",
+                ['cliente_id' => $cliente->id]
+            );
+
+            DB::commit();
+
+            return $cliente;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erro ao alterar status do cliente: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Obtém estatísticas dos clientes.
+     *
+     * @return array
+     */
+    public function getEstatisticas(): array
     {
         return [
             'total' => Cliente::count(),
             'ativos' => Cliente::where('ativo', true)->count(),
             'inativos' => Cliente::where('ativo', false)->count(),
-            'com_ordens' => Cliente::has('ordensServico')->count(),
-            'sem_ordens' => Cliente::doesntHave('ordensServico')->count(),
+            'novos_mes' => Cliente::whereMonth('created_at', now()->month)->count(),
         ];
-    }
-
-    /**
-     * Obtém clientes mais ativos
-     */
-    public function obterClientesMaisAtivos(int $limit = 10): Collection
-    {
-        return Cliente::withCount('ordensServico')
-            ->orderBy('ordens_servico_count', 'desc')
-            ->limit($limit)
-            ->get();
-    }
-
-    /**
-     * Verifica se CPF/CNPJ já existe
-     */
-    public function cpfCnpjExiste(string $cpfCnpj, ?Cliente $excludeCliente = null): bool
-    {
-        $query = Cliente::where('cpf_cnpj', $cpfCnpj);
-
-        if ($excludeCliente) {
-            $query->where('id', '!=', $excludeCliente->id);
-        }
-
-        return $query->exists();
-    }
-
-    /**
-     * Verifica se email já existe
-     */
-    public function emailExiste(string $email, ?Cliente $excludeCliente = null): bool
-    {
-        $query = Cliente::where('email', $email);
-
-        if ($excludeCliente) {
-            $query->where('id', '!=', $excludeCliente->id);
-        }
-
-        return $query->exists();
     }
 }
