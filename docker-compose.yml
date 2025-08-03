@@ -1,0 +1,91 @@
+# version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eletronica-oriental-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www/html:cached
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:cached
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:cached
+      - .env.docker:/var/www/html/.env
+    env_file:
+      - .env.docker
+    networks:
+      - eletronica-oriental
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "artisan", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    image: node:20-alpine
+    container_name: eletronica-oriental-frontend
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./:/app:cached
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0"
+    networks:
+      - eletronica-oriental
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: eletronica-oriental-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: eletronica_oriental
+      MYSQL_ROOT_PASSWORD: password
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/mysql:/docker-entrypoint-initdb.d
+    networks:
+      - eletronica-oriental
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: eletronica-oriental-phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: password
+    ports:
+      - "8080:80"
+    networks:
+      - eletronica-oriental
+    depends_on:
+      - db
+
+networks:
+  eletronica-oriental:
+    driver: bridge
+    name: eletronica-oriental-network
+
+volumes:
+  db_data:
+    name: eletronica-oriental-db-data

@@ -1,0 +1,46 @@
+{
+    frankenphp
+    # Configurações globais
+    admin off
+    auto_https off
+    debug
+}
+
+:80 {
+    # Configurações do Laravel
+    root * /var/www/html/public
+    php_server
+    encode gzip
+    file_server
+
+    # Configurações de segurança
+    header {
+        # HSTS
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        # Proteção XSS
+        X-XSS-Protection "1; mode=block"
+        # Proteção contra clickjacking
+        X-Frame-Options "SAMEORIGIN"
+        # Proteção contra MIME type sniffing
+        X-Content-Type-Options "nosniff"
+        # Referrer Policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+                        # Content Security Policy ajustada para Vite e fonts.bunny.net
+                Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: http: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:5173; connect-src 'self' ws://localhost:5173 http://localhost:5173; font-src 'self' data: http://localhost:5173 https://fonts.bunny.net; style-src 'self' 'unsafe-inline' http://localhost:5173 https://fonts.bunny.net;"
+        # Remove o header X-Powered-By
+        -X-Powered-By
+    }
+
+    # Configurações de cache
+    @static {
+        file
+        path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.svg *.woff *.woff2 *.ttf *.eot
+    }
+    header @static Cache-Control "public, max-age=31536000"
+
+    # Configurações de log
+    log {
+        output stdout
+        format console
+    }
+}
