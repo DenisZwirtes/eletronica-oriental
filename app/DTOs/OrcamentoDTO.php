@@ -3,6 +3,7 @@
 namespace App\DTOs;
 
 use Illuminate\Http\Request;
+use App\Enums\OrcamentoStatus;
 
 class OrcamentoDTO
 {
@@ -10,9 +11,9 @@ class OrcamentoDTO
         public readonly ?int $id,
         public readonly int $cliente_id,
         public readonly string $numero,
-        public readonly string $descricao,
+        public readonly string $defeito_relatado,
         public readonly float $valor_total,
-        public readonly string $status,
+        public readonly OrcamentoStatus $status,
         public readonly ?string $data_criacao,
         public readonly ?string $data_validade,
         public readonly ?string $observacoes
@@ -24,9 +25,9 @@ class OrcamentoDTO
             id: $request->input('id'),
             cliente_id: $request->input('cliente_id'),
             numero: $request->input('numero'),
-            descricao: $request->input('descricao'),
+            defeito_relatado: $request->input('defeito_relatado'),
             valor_total: (float) $request->input('valor_total', 0),
-            status: $request->input('status', 'pendente'),
+            status: OrcamentoStatus::fromString($request->input('status', 'pendente')),
             data_criacao: $request->input('data_criacao'),
             data_validade: $request->input('data_validade'),
             observacoes: $request->input('observacoes')
@@ -39,9 +40,9 @@ class OrcamentoDTO
             id: $orcamento->id,
             cliente_id: $orcamento->cliente_id,
             numero: $orcamento->numero,
-            descricao: $orcamento->descricao,
+            defeito_relatado: $orcamento->defeito_relatado,
             valor_total: $orcamento->valor_total,
-            status: $orcamento->status,
+            status: OrcamentoStatus::fromString($orcamento->status),
             data_criacao: $orcamento->data_criacao?->format('Y-m-d'),
             data_validade: $orcamento->data_validade?->format('Y-m-d'),
             observacoes: $orcamento->observacoes
@@ -54,12 +55,20 @@ class OrcamentoDTO
             'id' => $this->id,
             'cliente_id' => $this->cliente_id,
             'numero' => $this->numero,
-            'descricao' => $this->descricao,
+            'defeito_relatado' => $this->defeito_relatado,
             'valor_total' => $this->valor_total,
-            'status' => $this->status,
+            'status' => $this->status->value,
             'data_criacao' => $this->data_criacao,
             'data_validade' => $this->data_validade,
             'observacoes' => $this->observacoes,
         ];
+    }
+
+    public function toResponseArray(): array
+    {
+        return array_merge($this->toArray(), [
+            'status_label' => $this->status->label(),
+            'status_color' => $this->status->color(),
+        ]);
     }
 }

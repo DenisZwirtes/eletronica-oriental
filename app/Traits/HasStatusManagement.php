@@ -7,211 +7,150 @@ use App\Enums\OrdemServicoStatus;
 
 trait HasStatusManagement
 {
-    /**
-     * Verifica se o status é ativo
-     */
     public function isStatusActive(): bool
     {
-        if (property_exists($this, 'status')) {
-            return match($this->status) {
-                'pendente', 'em_andamento' => true,
-                default => false,
-            };
+        $status = $this->getStatusEnum();
+
+        if ($status instanceof OrcamentoStatus) {
+            return $status->isActive();
         }
+
+        if ($status instanceof OrdemServicoStatus) {
+            return $status->isActive();
+        }
+
         return false;
     }
 
-    /**
-     * Verifica se o status permite edição
-     */
-    public function canEdit(): bool
-    {
-        if (property_exists($this, 'status')) {
-            return match($this->status) {
-                'pendente', 'em_andamento' => true,
-                default => false,
-            };
-        }
-        return false;
-    }
-
-    /**
-     * Verifica se o status permite cancelamento
-     */
-    public function canCancel(): bool
-    {
-        if (property_exists($this, 'status')) {
-            return match($this->status) {
-                'pendente', 'em_andamento' => true,
-                default => false,
-            };
-        }
-        return false;
-    }
-
-    /**
-     * Verifica se o status permite conclusão
-     */
-    public function canComplete(): bool
-    {
-        if (property_exists($this, 'status')) {
-            return match($this->status) {
-                'em_andamento' => true,
-                default => false,
-            };
-        }
-        return false;
-    }
-
-    /**
-     * Obtém a cor do status
-     */
     public function getStatusColor(): string
     {
-        if (property_exists($this, 'status')) {
-            return match($this->status) {
-                'pendente' => 'yellow',
-                'em_andamento' => 'blue',
-                'concluida', 'aprovado' => 'green',
-                'cancelada', 'rejeitado' => 'red',
-                'convertido' => 'purple',
-                default => 'gray',
-            };
+        $status = $this->getStatusEnum();
+
+        if ($status instanceof OrcamentoStatus) {
+            return $status->color();
         }
+
+        if ($status instanceof OrdemServicoStatus) {
+            return $status->color();
+        }
+
         return 'gray';
     }
 
-    /**
-     * Obtém o label do status
-     */
-    public function getStatusLabel(): string
-    {
-        if (property_exists($this, 'status')) {
-            return match($this->status) {
-                'pendente' => 'Pendente',
-                'em_andamento' => 'Em Andamento',
-                'concluida' => 'Concluída',
-                'cancelada' => 'Cancelada',
-                'aprovado' => 'Aprovado',
-                'rejeitado' => 'Rejeitado',
-                'convertido' => 'Convertido em OS',
-                default => 'Desconhecido',
-            };
-        }
-        return 'Desconhecido';
-    }
-
-    /**
-     * Verifica se é um orçamento
-     */
-    public function isOrcamento(): bool
-    {
-        return property_exists($this, 'table') && $this->table === 'orcamentos';
-    }
-
-    /**
-     * Verifica se é uma ordem de serviço
-     */
-    public function isOrdemServico(): bool
-    {
-        return property_exists($this, 'table') && $this->table === 'ordens_servico';
-    }
-
-    /**
-     * Obtém o enum de status apropriado
-     */
     public function getStatusEnum(): OrcamentoStatus|OrdemServicoStatus|null
     {
         if (!$this->status) {
             return null;
         }
 
-        if ($this->isOrcamento()) {
+        try {
             return OrcamentoStatus::fromString($this->status);
+        } catch (\InvalidArgumentException $e) {
+            try {
+                return OrdemServicoStatus::fromString($this->status);
+            } catch (\InvalidArgumentException $e) {
+                return null;
+            }
         }
-
-        if ($this->isOrdemServico()) {
-            return OrdemServicoStatus::fromString($this->status);
-        }
-
-        return null;
     }
 
-    /**
-     * Atualiza o status
-     */
     public function updateStatus(string $newStatus): bool
     {
-        if (!property_exists($this, 'status')) {
-            return false;
+        try {
+            $newStatusEnum = OrcamentoStatus::fromString($newStatus);
+            $this->update(['status' => $newStatusEnum->value]);
+            return true;
+        } catch (\InvalidArgumentException $e) {
+            try {
+                $newStatusEnum = OrdemServicoStatus::fromString($newStatus);
+                $this->update(['status' => $newStatusEnum->value]);
+                return true;
+            } catch (\InvalidArgumentException $e) {
+                return false;
+            }
+        }
+    }
+
+    // Métodos específicos para Orçamento
+    public function markAsPending(): void
+    {
+        $this->update(['status' => OrcamentoStatus::PENDENTE->value]);
+    }
+
+    public function markAsApproved(): void
+    {
+        $this->update(['status' => OrcamentoStatus::APROVADO->value]);
+    }
+
+    public function markAsRejected(): void
+    {
+        $this->update(['status' => OrcamentoStatus::REJEITADO->value]);
+    }
+
+    public function markAsConverted(): void
+    {
+        $this->update(['status' => OrcamentoStatus::CONVERTIDO->value]);
+    }
+
+    // Métodos específicos para Ordem de Serviço
+    public function markAsInProgress(): void
+    {
+        $this->update(['status' => OrdemServicoStatus::EM_ANDAMENTO->value]);
+    }
+
+    public function markAsCompleted(): void
+    {
+        $this->update(['status' => OrdemServicoStatus::CONCLUIDA->value]);
+    }
+
+    public function markAsCancelled(): void
+    {
+        $this->update(['status' => OrdemServicoStatus::CANCELADA->value]);
+    }
+
+    // Métodos de verificação
+    public function canEdit(): bool
+    {
+        $status = $this->getStatusEnum();
+
+        if ($status instanceof OrcamentoStatus) {
+            return in_array($status, [OrcamentoStatus::PENDENTE, OrcamentoStatus::APROVADO]);
         }
 
-        $this->status = $newStatus;
-        return $this->save();
-    }
-
-    /**
-     * Marca como pendente
-     */
-    public function markAsPending(): bool
-    {
-        return $this->updateStatus('pendente');
-    }
-
-    /**
-     * Marca como em andamento
-     */
-    public function markAsInProgress(): bool
-    {
-        return $this->updateStatus('em_andamento');
-    }
-
-    /**
-     * Marca como concluído
-     */
-    public function markAsCompleted(): bool
-    {
-        return $this->updateStatus('concluida');
-    }
-
-    /**
-     * Marca como cancelado
-     */
-    public function markAsCancelled(): bool
-    {
-        return $this->updateStatus('cancelada');
-    }
-
-    /**
-     * Marca como aprovado (apenas para orçamentos)
-     */
-    public function markAsApproved(): bool
-    {
-        if ($this->isOrcamento()) {
-            return $this->updateStatus('aprovado');
+        if ($status instanceof OrdemServicoStatus) {
+            return in_array($status, [OrdemServicoStatus::PENDENTE, OrdemServicoStatus::EM_ANDAMENTO]);
         }
+
         return false;
     }
 
-    /**
-     * Marca como rejeitado (apenas para orçamentos)
-     */
-    public function markAsRejected(): bool
+    public function canCancel(): bool
     {
-        if ($this->isOrcamento()) {
-            return $this->updateStatus('rejeitado');
+        $status = $this->getStatusEnum();
+
+        if ($status instanceof OrcamentoStatus) {
+            return in_array($status, [OrcamentoStatus::PENDENTE, OrcamentoStatus::APROVADO]);
         }
+
+        if ($status instanceof OrdemServicoStatus) {
+            return in_array($status, [OrdemServicoStatus::PENDENTE, OrdemServicoStatus::EM_ANDAMENTO]);
+        }
+
         return false;
     }
 
-    /**
-     * Marca como convertido (apenas para orçamentos)
-     */
-    public function markAsConverted(): bool
+    public function getStatusDisplayLabel(): string
     {
-        if ($this->isOrcamento()) {
-            return $this->updateStatus('convertido');
+        $status = $this->getStatusEnum();
+
+        if ($status instanceof OrcamentoStatus) {
+            return $status->label();
         }
-        return false;
+
+        if ($status instanceof OrdemServicoStatus) {
+            return $status->label();
+        }
+
+        return 'Desconhecido';
     }
 }

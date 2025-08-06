@@ -3,6 +3,7 @@
 namespace App\DTOs;
 
 use Illuminate\Http\Request;
+use App\Enums\OrdemServicoStatus;
 
 class OrdemServicoDTO
 {
@@ -22,7 +23,7 @@ class OrdemServicoDTO
         public readonly float $valor_mao_obra,
         public readonly float $valor_pecas,
         public readonly float $valor_total,
-        public readonly string $status,
+        public readonly OrdemServicoStatus $status,
         public readonly ?string $data_entrada,
         public readonly ?string $data_saida,
         public readonly ?int $garantia_dias,
@@ -47,7 +48,7 @@ class OrdemServicoDTO
             valor_mao_obra: (float) $request->input('valor_mao_obra', 0),
             valor_pecas: (float) $request->input('valor_pecas', 0),
             valor_total: (float) $request->input('valor_total', 0),
-            status: $request->input('status', 'pendente'),
+            status: OrdemServicoStatus::fromString($request->input('status', 'pendente')),
             data_entrada: $request->input('data_entrada'),
             data_saida: $request->input('data_saida'),
             garantia_dias: $request->input('garantia_dias'),
@@ -73,7 +74,7 @@ class OrdemServicoDTO
             valor_mao_obra: $ordemServico->valor_mao_obra,
             valor_pecas: $ordemServico->valor_pecas,
             valor_total: $ordemServico->valor_total,
-            status: $ordemServico->status,
+            status: OrdemServicoStatus::fromString($ordemServico->status),
             data_entrada: $ordemServico->data_entrada?->format('Y-m-d'),
             data_saida: $ordemServico->data_saida?->format('Y-m-d'),
             garantia_dias: $ordemServico->garantia_dias,
@@ -99,11 +100,19 @@ class OrdemServicoDTO
             'valor_mao_obra' => $this->valor_mao_obra,
             'valor_pecas' => $this->valor_pecas,
             'valor_total' => $this->valor_total,
-            'status' => $this->status,
+            'status' => $this->status->value,
             'data_entrada' => $this->data_entrada,
             'data_saida' => $this->data_saida,
             'garantia_dias' => $this->garantia_dias,
             'observacoes' => $this->observacoes,
         ];
+    }
+
+    public function toResponseArray(): array
+    {
+        return array_merge($this->toArray(), [
+            'status_label' => $this->status->label(),
+            'status_color' => $this->status->color(),
+        ]);
     }
 }

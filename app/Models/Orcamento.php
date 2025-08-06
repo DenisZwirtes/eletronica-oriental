@@ -61,8 +61,6 @@ class Orcamento extends Model
         return $this->belongsTo(User::class, 'atendente_id');
     }
 
-
-
     /**
      * Escopo para orçamentos pendentes
      */
@@ -172,33 +170,5 @@ class Orcamento extends Model
     {
         $this->update(['status' => 'rejeitado']);
         return true;
-    }
-
-    /**
-     * Obtém o status formatado
-     */
-    public function getStatusFormatadoAttribute(): string
-    {
-        return match($this->status) {
-            'pendente' => 'Pendente',
-            'aprovado' => 'Aprovado',
-            'rejeitado' => 'Rejeitado',
-            'vencido' => 'Vencido',
-            default => 'Desconhecido'
-        };
-    }
-
-    /**
-     * Obtém a cor do status
-     */
-    public function getStatusColorAttribute(): string
-    {
-        return match($this->status) {
-            'pendente' => 'yellow',
-            'aprovado' => 'green',
-            'rejeitado' => 'red',
-            'vencido' => 'gray',
-            default => 'gray'
-        };
     }
 }

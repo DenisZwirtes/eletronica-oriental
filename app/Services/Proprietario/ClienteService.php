@@ -2,196 +2,50 @@
 
 namespace App\Services\Proprietario;
 
-use App\Models\Cliente;
 use App\DTOs\ClienteDTO;
-use App\Services\Common\ActivityLoggerService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Models\Cliente;
+use Illuminate\Database\Eloquent\Collection;
 
 class ClienteService
 {
-    public function __construct(
-        private ActivityLoggerService $activityLogger
-    ) {}
-
     /**
-     * Lista todos os clientes com paginação.
-     *
-     * @param int $perPage
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * Lista todos os clientes
      */
-    public function listarClientes(int $perPage = 15)
+    public function listar(): Collection
     {
-        return Cliente::query()
-            ->orderBy('nome')
-            ->paginate($perPage);
+        return Cliente::all();
     }
 
     /**
-     * Busca clientes por termo de pesquisa.
-     *
-     * @param string $termo
-     * @param int $perPage
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * Cria um novo cliente
      */
-    public function buscarClientes(string $termo, int $perPage = 15)
+    public function criar(ClienteDTO $dto): Cliente
     {
-        return Cliente::query()
-            ->where('nome', 'like', "%{$termo}%")
-            ->orWhere('email', 'like', "%{$termo}%")
-            ->orWhere('telefone', 'like', "%{$termo}%")
-            ->orWhere('cpf_cnpj', 'like', "%{$termo}%")
-            ->orderBy('nome')
-            ->paginate($perPage);
+        return Cliente::create($dto->toArray());
     }
 
     /**
-     * Cria um novo cliente usando DTO.
-     *
-     * @param ClienteDTO $dto
-     * @return Cliente
+     * Atualiza um cliente existente
      */
-    public function criarCliente(ClienteDTO $dto): Cliente
+    public function atualizar(Cliente $cliente, ClienteDTO $dto): Cliente
     {
-        try {
-            DB::beginTransaction();
-
-            $cliente = Cliente::create($dto->toArray());
-
-            $this->activityLogger->logCreate(
-                'cliente',
-                "Cliente '{$cliente->nome}' criado com sucesso",
-                ['cliente_id' => $cliente->id]
-            );
-
-            DB::commit();
-
-            return $cliente;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Erro ao criar cliente: ' . $e->getMessage());
-            throw $e;
-        }
+        $cliente->update($dto->toArray());
+        return $cliente;
     }
 
     /**
-     * Atualiza um cliente existente usando DTO.
-     *
-     * @param int $id
-     * @param ClienteDTO $dto
-     * @return Cliente
+     * Exclui um cliente
      */
-    public function atualizarCliente(int $id, ClienteDTO $dto): Cliente
+    public function excluir(Cliente $cliente): bool
     {
-        try {
-            DB::beginTransaction();
-
-            $cliente = Cliente::findOrFail($id);
-            $cliente->update($dto->toArray());
-
-            $this->activityLogger->logUpdate(
-                'cliente',
-                "Cliente '{$cliente->nome}' atualizado com sucesso",
-                ['cliente_id' => $cliente->id]
-            );
-
-            DB::commit();
-
-            return $cliente;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Erro ao atualizar cliente: ' . $e->getMessage());
-            throw $e;
-        }
+        return $cliente->delete();
     }
 
     /**
-     * Exclui um cliente.
-     *
-     * @param int $id
-     * @return bool
+     * Busca um cliente por ID
      */
-    public function excluirCliente(int $id): bool
+    public function buscarPorId(int $id): ?Cliente
     {
-        try {
-            DB::beginTransaction();
-
-            $cliente = Cliente::findOrFail($id);
-            $nomeCliente = $cliente->nome;
-            
-            $cliente->delete();
-
-            $this->activityLogger->logDelete(
-                'cliente',
-                "Cliente '{$nomeCliente}' excluído com sucesso",
-                ['cliente_id' => $id]
-            );
-
-            DB::commit();
-
-            return true;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Erro ao excluir cliente: ' . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * Busca um cliente por ID.
-     *
-     * @param int $id
-     * @return Cliente
-     */
-    public function buscarCliente(int $id): Cliente
-    {
-        return Cliente::findOrFail($id);
-    }
-
-    /**
-     * Ativa/desativa um cliente.
-     *
-     * @param int $id
-     * @return Cliente
-     */
-    public function toggleStatus(int $id): Cliente
-    {
-        try {
-            DB::beginTransaction();
-
-            $cliente = Cliente::findOrFail($id);
-            $cliente->ativo = !$cliente->ativo;
-            $cliente->save();
-
-            $acao = $cliente->ativo ? 'ativado' : 'desativado';
-            $this->activityLogger->logUpdate(
-                'cliente',
-                "Cliente '{$cliente->nome}' {$acao}",
-                ['cliente_id' => $cliente->id]
-            );
-
-            DB::commit();
-
-            return $cliente;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Erro ao alterar status do cliente: ' . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * Obtém estatísticas dos clientes.
-     *
-     * @return array
-     */
-    public function getEstatisticas(): array
-    {
-        return [
-            'total' => Cliente::count(),
-            'ativos' => Cliente::where('ativo', true)->count(),
-            'inativos' => Cliente::where('ativo', false)->count(),
-            'novos_mes' => Cliente::whereMonth('created_at', now()->month)->count(),
-        ];
+        return Cliente::find($id);
     }
 }

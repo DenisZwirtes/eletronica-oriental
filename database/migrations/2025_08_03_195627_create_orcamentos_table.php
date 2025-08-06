@@ -28,7 +28,7 @@ return new class extends Migration
             $table->decimal('valor_pecas', 10, 2)->default(0);
             $table->decimal('valor_total', 10, 2)->default(0);
             $table->integer('validade_dias')->default(7);
-            $table->enum('status', ['pendente', 'aprovado', 'rejeitado'])->default('pendente');
+            $table->enum('status', ['pendente', 'aprovado', 'rejeitado', 'convertido'])->default('pendente');
             $table->datetime('data_criacao');
             $table->datetime('data_validade');
             $table->text('observacoes')->nullable();
