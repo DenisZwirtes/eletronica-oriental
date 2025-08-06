@@ -20,7 +20,7 @@ trait HasAuditLog
     public function getActivityDescription(string $eventName): string
     {
         $modelName = class_basename($this);
-        
+
         return match($eventName) {
             'created' => "{$modelName} foi criado",
             'updated' => "{$modelName} foi atualizado",
@@ -49,7 +49,7 @@ trait HasAuditLog
         if (isset($this->ativo)) {
             return $this->ativo ? 'Ativo' : 'Inativo';
         }
-        
+
         return 'N/A';
     }
 }
