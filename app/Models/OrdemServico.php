@@ -5,11 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\HasAuditLog;
+use App\Traits\HasStatusManagement;
+use App\Enums\OrdemServicoStatus;
 
 class OrdemServico extends Model
 {
-    use HasFactory;
+    use HasFactory, HasAuditLog, HasStatusManagement;
+
+    protected $table = 'ordens_servico';
 
     protected $fillable = [
         'numero',
@@ -58,13 +62,7 @@ class OrdemServico extends Model
         return $this->belongsTo(User::class, 'tecnico_id');
     }
 
-    /**
-     * Relacionamento com itens da ordem
-     */
-    public function itens(): HasMany
-    {
-        return $this->hasMany(OrdemServicoItem::class);
-    }
+
 
     /**
      * Escopo para ordens pendentes
@@ -184,4 +182,4 @@ class OrdemServico extends Model
             default => 'gray'
         };
     }
-} 
+}

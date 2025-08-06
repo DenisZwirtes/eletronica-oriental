@@ -1,6 +1,6 @@
-# Eletrônica Oriental - Sistema de Gestão
+# 🏪 Eletrônica Oriental - Sistema de Gestão
 
-Sistema de gestão para eletrônica desenvolvido com Laravel 12.0, Vue.js 3.4.0, Inertia.js e TailwindCSS. Gerencia consertos, ordens de serviço, clientes e controle de estoque.
+Sistema de gestão para empresa de eletrônica desenvolvido com Laravel 12, Vue.js 3, Inertia.js e TailwindCSS. Gerencia clientes, orçamentos, ordens de serviço e controle financeiro.
 
 ## 📚 Índice
 
@@ -9,7 +9,6 @@ Sistema de gestão para eletrônica desenvolvido com Laravel 12.0, Vue.js 3.4.0,
 - [🔧 Instalação](#-instalação)
 - [🏗️ Estrutura do Projeto](#️-estrutura-do-projeto)
 - [🧪 Testes](#-testes)
-- [📧 Email e WhatsApp](#-email-e-whatsapp)
 - [👥 Perfis de Usuário](#-perfis-de-usuário)
 - [📝 Funcionalidades](#-funcionalidades)
 - [🔐 Segurança](#-segurança)
@@ -18,17 +17,15 @@ Sistema de gestão para eletrônica desenvolvido com Laravel 12.0, Vue.js 3.4.0,
 
 ## 🚀 Tecnologias
 
-- **Backend:** Laravel 12.0
-- **Frontend:** Vue.js 3.4.0 + Inertia.js 2.0
-- **CSS:** TailwindCSS 3.2.1
+- **Backend:** Laravel 12
+- **Frontend:** Vue.js 3 + Inertia.js
+- **CSS:** TailwindCSS
 - **Banco de Dados:** MySQL 8+
 - **Autenticação:** Laravel Breeze + Google OAuth
-- **Autorização:** Spatie Laravel-permission 6.21
-- **Testes:** Pest PHP 3.0
-- **Servidor:** FrankenPHP (Caddy + PHP 8.4)
+- **Autorização:** Spatie Laravel-permission
+- **Testes:** Pest PHP
+- **Servidor:** Caddy + PHP 8.4
 - **Containerização:** Docker
-- **Relatórios:** DomPDF + Excel
-- **QR Code:** Simple QR Code
 
 ## 📋 Pré-requisitos
 
@@ -38,7 +35,9 @@ Sistema de gestão para eletrônica desenvolvido com Laravel 12.0, Vue.js 3.4.0,
 
 ## 🔧 Instalação
 
-### Ambiente Docker (Recomendado)
+Para instruções detalhadas sobre a instalação e configuração do ambiente Docker, consulte a [documentação Docker](./docs/docker/setup.md).
+
+### Passos Básicos
 
 1. Clone o repositório:
    ```bash
@@ -46,48 +45,35 @@ Sistema de gestão para eletrônica desenvolvido com Laravel 12.0, Vue.js 3.4.0,
    cd eletronica-oriental
    ```
 
-2. Inicie o ambiente de desenvolvimento:
+2. Configure o ambiente:
    ```bash
-   ./docker-dev.sh start
+   cp .env.example .env
    ```
 
-3. Acesse a aplicação:
-   - **Aplicação:** [http://localhost:8000](http://localhost:8000)
-   - **PHPMyAdmin:** [http://localhost:8080](http://localhost:8080)
-   - **Frontend:** [http://localhost:5173](http://localhost:5173)
+3. Inicie os containers:
+   ```bash
+   docker-compose up -d
+   ```
 
-### Comandos Úteis
+4. Instale as dependências:
+   ```bash
+   docker-compose exec app composer install
+   docker-compose exec app npm install
+   ```
 
-```bash
-# Iniciar ambiente
-./docker-dev.sh start
+5. Configure o projeto:
+   ```bash
+   docker-compose exec app php artisan key:generate
+   docker-compose exec app php artisan storage:link
+   docker-compose exec app php artisan migrate --seed
+   ```
 
-# Parar ambiente
-./docker-dev.sh stop
+6. Inicie o ambiente de desenvolvimento:
+   ```bash
+   docker-compose exec app npm run dev
+   ```
 
-# Reiniciar ambiente
-./docker-dev.sh restart
-
-# Ver logs
-./docker-dev.sh logs
-
-# Executar comando no container
-./docker-dev.sh exec 'php artisan migrate'
-
-# Acessar shell do container
-./docker-dev.sh shell
-
-# Limpar tudo
-./docker-dev.sh clean
-
-# Ver ajuda
-./docker-dev.sh help
-```
-
-### Credenciais de Acesso
-
-- **Email:** proprietario@eletronica.com
-- **Senha:** password
+**Acesse:** [http://localhost:8000](http://localhost:8000)
 
 ## 🏗️ Estrutura do Projeto
 
@@ -96,12 +82,14 @@ Sistema de gestão para eletrônica desenvolvido com Laravel 12.0, Vue.js 3.4.0,
 ├── app
 │   ├── Http
 │   │   ├── Controllers      # Controladores por função
+│   │   │   ├── Auth/        # Autenticação
+│   │   │   └── ...          # Outros controllers
 │   │   ├── Middleware       # Middlewares da aplicação
 │   │   └── Requests        # Form Requests para validação
 │   ├── Models              # Modelos do Eloquent
 │   └── Services           # Camada de serviços organizada por perfil
 │       ├── Common/         # Serviços comuns a todos os perfis
-│       ├── Admin/          # Serviços específicos do administrador
+│       ├── Proprietario/   # Serviços específicos do proprietário
 │       ├── Tecnico/        # Serviços específicos do técnico
 │       ├── Atendente/      # Serviços específicos do atendente
 │       ├── Relatorios/     # Serviços de relatórios
@@ -129,30 +117,21 @@ O sistema possui uma organização clara dos serviços por perfil de usuário:
 
 ```
 app/Services/
-├── Common/ (8 serviços)
+├── Common/ (4 serviços)
 │   ├── ActivityLoggerService.php    # Log de atividades do sistema
-│   ├── GoogleAuthService.php        # Autenticação Google
-│   ├── LogService.php              # Logs gerais do sistema
-│   ├── ProfileService.php          # Gerenciamento de perfil
-│   ├── RateLimiterService.php      # Controle de taxa de requisições
-│   ├── RedirectService.php         # Redirecionamentos
 │   ├── CacheService.php            # Cache do sistema
+│   ├── ProfileService.php          # Gerenciamento de perfil
 │   └── DashboardServiceFactory.php # Factory para dashboards
 │
-├── Proprietario/ (8 serviços)
+├── Proprietario/ (2 serviços)
 │   ├── ClienteService.php          # CRUD de clientes
-│   ├── OrdemServicoService.php     # Gestão de ordens de serviço
-│   ├── OrcamentoService.php        # Gestão de orçamentos
-│   ├── ConsertoService.php         # Execução de consertos
-│   ├── DiagnosticoService.php      # Diagnósticos técnicos
-│   ├── GarantiaService.php         # Controle de garantias
-│   ├── RelatorioService.php        # Relatórios gerais
-│   └── ConfiguracaoService.php     # Configurações do sistema
+│   └── ConsertoService.php         # Gestão de consertos
 │
-├── Relatorios/ (3 serviços)
-│   ├── GeradorDadosRelatorioService.php # Geração de dados para relatórios
-│   ├── RelatorioService.php        # Relatórios gerais
-│   └── ExportacaoService.php       # Exportação de dados
+├── Atendente/ (1 serviço)
+│   └── AtendimentoService.php      # Gestão de atendimento
+│
+├── Relatorios/ (em desenvolvimento)
+│   └── # Serviços de relatórios
 │
 └── Dashboards/ (1 serviço)
     └── ProprietarioDashboardService.php # Dashboard do proprietário
@@ -168,73 +147,55 @@ app/Services/
 ## 🧪 Testes
 
 ### Status dos Testes
-- **Total de Testes:** Implementação em andamento
-- **Cobertura:** Meta de 60% de cobertura de código
-- **Padrão:** Pest PHP com mensagens em português
+- **Total de Testes:** Em desenvolvimento
+- **Cobertura:** Em implementação
+- **Controllers:** Em desenvolvimento
+- **Services:** Em desenvolvimento
+- **Models:** Em desenvolvimento
 
 ### Executando Testes
 ```bash
 # Todos os testes
-docker compose exec app php artisan test
+docker-compose exec app php artisan test
 
 # Testes específicos
-docker compose exec app php artisan test --filter="NomeDoTeste"
+docker-compose exec app php artisan test --filter="NomeDoTeste"
 
 # Com coverage
-docker compose exec app php artisan test --coverage
+docker-compose exec app php artisan test --coverage
 
 # Com coverage mínimo (60%)
-docker compose exec app php artisan test --coverage --min=60
+docker-compose exec app php artisan test --coverage --min=60
 ```
 
-## 📧 Email e WhatsApp
+## 👥 Perfis de Usuário
 
-### Ambiente de Email
-
-- **Desenvolvimento/Testes:**  
-  Utilize o MailHog (já configurado no docker-compose) para capturar todos os emails enviados pelo sistema.
-  - Interface: [http://localhost:8025](http://localhost:8025)
-  - Nenhum email é enviado de verdade.
-  - Configure seu `.env` assim:
-    ```env
-    MAIL_MAILER=smtp
-    MAIL_HOST=localhost
-    MAIL_PORT=1025
-    MAIL_USERNAME=null
-    MAIL_PASSWORD=null
-    MAIL_ENCRYPTION=null
-    ```
-
-- **Produção:**  
-  Configure o `.env` de produção com as credenciais SMTP:
-    ```env
-    MAIL_MAILER=smtp
-    MAIL_HOST=smtp.seudominio.com
-    MAIL_PORT=587
-    MAIL_USERNAME=seu_email@seudominio.com
-    MAIL_PASSWORD=sua_senha_smtp
-    MAIL_ENCRYPTION=tls
-    MAIL_FROM_ADDRESS=contato@seudominio.com
-    MAIL_FROM_NAME="Eletrônica Oriental"
-    ```
-
-## 👥 Perfil de Usuário
-
-O sistema possui um único usuário:
-- **Proprietário**: Acesso completo ao sistema para gerenciar clientes, ordens de serviço, orçamentos e relatórios
+O sistema possui quatro tipos de usuários:
+- **Admin**: Gerenciamento completo do sistema
+- **Proprietário**: Gestão de clientes, orçamentos e ordens de serviço
+- **Técnico**: Execução de serviços e reparos
+- **Atendente**: Atendimento ao cliente e gestão básica
 
 ## 📝 Funcionalidades
 
-### Módulo Principal (Proprietário)
+### Módulo Proprietário
 - Gestão de clientes (CRUD)
-- Gestão de ordens de serviço (CRUD)
 - Gestão de orçamentos (CRUD)
-- Execução de consertos
-- Diagnósticos técnicos
-- Controle de garantias
+- Gestão de ordens de serviço (CRUD)
+- Relatórios financeiros
+- Dashboard com métricas
+
+### Módulo Técnico
+- Visualização de ordens de serviço
+- Registro de serviços realizados
+- Controle de peças utilizadas
+- Registro de garantias
+
+### Módulo Atendente
 - Atendimento ao cliente
-- Geração de relatórios em PDF/Excel
-- Configurações do sistema
+- Criação de orçamentos básicos
+- Agendamento de serviços
+- Controle de status
 
 ## 🔐 Segurança
 
@@ -255,20 +216,26 @@ O sistema possui um único usuário:
 - [Desenvolvimento](./docs/docker/development.md) - Comandos e scripts para desenvolvimento
 
 ### 🔗 Integrações
-- [n8n](./docs/integrations/n8n.md) - Integração com n8n para automações
+- [WhatsApp Business API](./docs/integrations/whatsapp.md) - Integração com WhatsApp Business
+- [Sistemas de Pagamento](./docs/integrations/payment.md) - Integração com gateways de pagamento
 
 ### 🔧 Técnico
 - [DTOs](./docs/technical/dtos.md) - Documentação dos Data Transfer Objects
 - [API Mobile Preparation](./docs/technical/api-mobile-preparation.md) - Preparação para API mobile
+- [Enums e Traits](./docs/technical/enums-and-traits.md) - Documentação dos enums e traits implementados
+- [Testes](./docs/technical/testing.md) - Estratégia e padrões de testes
+- [Dashboard Services](./docs/technical/dashboard-services.md) - Documentação dos serviços de dashboard
 - [Controller Standardization](./docs/technical/controller-standardization.md) - Padronização de controllers com injeção de dependência
 - [Routes Modularization](./docs/technical/routes-modularization.md) - Modularização de rotas por contexto
 
 ### 📚 Tutoriais
-- [Email e WhatsApp Setup](./docs/tutorials/email-whatsapp-setup.md) - Configuração de email e WhatsApp
-- [Workflow de Email no n8n](./docs/tutorials/email-workflow.md) - Tutorial prático para criar workflows
+- [Configuração de Email](./docs/tutorials/email-setup.md) - Configuração de email para notificações
+- [Configuração de WhatsApp](./docs/tutorials/whatsapp-setup.md) - Configuração do WhatsApp Business
+- [Gestão de Clientes](./docs/tutorials/client-management.md) - Tutorial para gestão de clientes
+- [Gestão de Ordens de Serviço](./docs/tutorials/service-orders.md) - Tutorial para gestão de ordens de serviço
 
 ### 📊 Estrutura do Banco
-- [Estrutura do Banco de Dados](./docs/estrutura_banco.md) - Documentação completa da estrutura do banco
+- [Estrutura do Banco de Dados](./docs/estrutura_banco.md) - Documentação completa da estrutura do banco de dados, relacionamentos e mudanças recentes
 
 ## 🤝 Contribuição
 
@@ -288,19 +255,28 @@ O sistema possui um único usuário:
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
----
-
 ## 🚀 Deploy em Produção
 
-O sistema está preparado para deploy em produção com as seguintes configurações:
+Por se tratar de um servidor compartilhado na Hostinger **NÃO suporta o uso do Docker**. O deploy é feito via GitHub Actions, que envia os arquivos para o servidor compartilhado da Hostinger usando SSH e executa os comandos necessários para rodar o Laravel em produção.
+
+### Como funciona o deploy:
+- O código é enviado automaticamente para o servidor Hostinger ao fazer push na branch `main`.
+- O workflow do GitHub Actions instala dependências, compila os assets e faz upload dos arquivos via SSH.
+- O `.env` de produção é gerado automaticamente com as variáveis dos secrets do GitHub.
+- Comandos Artisan são executados remotamente para preparar o sistema.
+
+**Atenção:**
+- Docker é usado apenas para desenvolvimento local.
+- Não é necessário rodar Docker no servidor Hostinger.
+- Veja o arquivo `.github/workflows/cd.yml` para detalhes do pipeline.
 
 ### Exemplo de configuração do `.env` para produção:
 ```env
-APP_NAME="Eletrônica Oriental"
+APP_NAME=Eletrônica Oriental
 APP_ENV=production
 APP_KEY= # Definido pelo workflow
 APP_DEBUG=false
-APP_URL=https://seudominio.com
+APP_URL=https://eletronica-oriental.com
 LOG_CHANNEL=stack
 DB_CONNECTION=mysql
 DB_HOST=localhost
@@ -309,7 +285,7 @@ DB_DATABASE=nome_do_banco
 DB_USERNAME=usuario
 DB_PASSWORD=senha
 MAIL_MAILER=smtp
-MAIL_HOST=smtp.seudominio.com
+MAIL_HOST=smtp.hostinger.com
 MAIL_PORT=587
 MAIL_USERNAME=seu_email@seudominio.com
 MAIL_PASSWORD=sua_senha_smtp
@@ -317,3 +293,11 @@ MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=contato@seudominio.com
 MAIL_FROM_NAME="Eletrônica Oriental"
 ```
+
+---
+
+## 🐳 Docker (apenas para desenvolvimento)
+
+> **Atenção:** Docker e Docker Compose são usados apenas para desenvolvimento local. Em produção (Hostinger), NÃO utilize Docker.
+
+Para instruções detalhadas sobre a instalação e configuração do ambiente Docker para desenvolvimento, consulte a [documentação Docker](./docs/docker/setup.md).

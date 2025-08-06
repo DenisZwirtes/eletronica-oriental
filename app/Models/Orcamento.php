@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\HasAuditLog;
+use App\Traits\HasStatusManagement;
+use App\Enums\OrcamentoStatus;
 
 class Orcamento extends Model
 {
-    use HasFactory;
+    use HasFactory, HasAuditLog, HasStatusManagement;
 
     protected $fillable = [
         'numero',
@@ -58,13 +61,7 @@ class Orcamento extends Model
         return $this->belongsTo(User::class, 'atendente_id');
     }
 
-    /**
-     * Relacionamento com itens do orçamento
-     */
-    public function itens(): HasMany
-    {
-        return $this->hasMany(OrcamentoItem::class);
-    }
+
 
     /**
      * Escopo para orçamentos pendentes
@@ -204,4 +201,4 @@ class Orcamento extends Model
             default => 'gray'
         };
     }
-} 
+}

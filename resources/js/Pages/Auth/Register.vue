@@ -31,6 +31,7 @@
 
           <!-- Formulário de Registro -->
           <form @submit.prevent="handleRegister" class="space-y-6">
+            <input type="hidden" name="_token" :value="$page.props.csrf_token">
             <!-- Campo Nome -->
             <div class="group">
               <label for="name" class="block text-sm font-medium text-gray-300 mb-3">
@@ -49,10 +50,10 @@
                   required
                   class="block w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all duration-300"
                   placeholder="Seu nome completo"
-                  :class="{ 'border-red-400 focus:ring-red-500': errors.name }"
+                  :class="{ 'border-red-400 focus:ring-red-500': form.errors.name }"
                 />
               </div>
-              <p v-if="errors.name" class="mt-2 text-sm text-red-400">{{ errors.name }}</p>
+              <p v-if="form.errors.name" class="mt-2 text-sm text-red-400">{{ form.errors.name }}</p>
             </div>
 
             <!-- Campo Email -->
@@ -73,10 +74,10 @@
                   required
                   class="block w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all duration-300"
                   placeholder="seu@email.com"
-                  :class="{ 'border-red-400 focus:ring-red-500': errors.email }"
+                  :class="{ 'border-red-400 focus:ring-red-500': form.errors.email }"
                 />
               </div>
-              <p v-if="errors.email" class="mt-2 text-sm text-red-400">{{ errors.email }}</p>
+              <p v-if="form.errors.email" class="mt-2 text-sm text-red-400">{{ form.errors.email }}</p>
             </div>
 
             <!-- Campo Senha -->
@@ -97,7 +98,7 @@
                   required
                   class="block w-full pl-12 pr-12 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all duration-300"
                   placeholder="••••••••"
-                  :class="{ 'border-red-400 focus:ring-red-500': errors.password }"
+                  :class="{ 'border-red-400 focus:ring-red-500': form.errors.password }"
                 />
                 <button
                   type="button"
@@ -113,7 +114,7 @@
                   </svg>
                 </button>
               </div>
-              <p v-if="errors.password" class="mt-2 text-sm text-red-400">{{ errors.password }}</p>
+              <p v-if="form.errors.password" class="mt-2 text-sm text-red-400">{{ form.errors.password }}</p>
             </div>
 
             <!-- Campo Confirmar Senha -->
@@ -134,7 +135,7 @@
                   required
                   class="block w-full pl-12 pr-12 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all duration-300"
                   placeholder="••••••••"
-                  :class="{ 'border-red-400 focus:ring-red-500': errors.password_confirmation }"
+                  :class="{ 'border-red-400 focus:ring-red-500': form.errors.password_confirmation }"
                 />
                 <button
                   type="button"
@@ -150,7 +151,7 @@
                   </svg>
                 </button>
               </div>
-              <p v-if="errors.password_confirmation" class="mt-2 text-sm text-red-400">{{ errors.password_confirmation }}</p>
+              <p v-if="form.errors.password_confirmation" class="mt-2 text-sm text-red-400">{{ form.errors.password_confirmation }}</p>
             </div>
 
             <!-- Termos e Condições -->
@@ -212,49 +213,24 @@ const form = useForm({
   terms: false
 })
 
-const errors = reactive({
-  name: '',
-  email: '',
-  password: '',
-  password_confirmation: ''
-})
 
-const handleRegister = async () => {
+
+const handleRegister = () => {
   loading.value = true
 
-  // Limpar erros anteriores
-  errors.name = ''
-  errors.email = ''
-  errors.password = ''
-  errors.password_confirmation = ''
-
-  try {
-    await form.post('/register', {
-      onSuccess: () => {
-        // Registro bem-sucedido
-        console.log('Conta criada com sucesso!')
-      },
-      onError: (errors) => {
-        // Tratar erros
-        if (errors.name) {
-          errors.name = errors.name
-        }
-        if (errors.email) {
-          errors.email = errors.email
-        }
-        if (errors.password) {
-          errors.password = errors.password
-        }
-        if (errors.password_confirmation) {
-          errors.password_confirmation = errors.password_confirmation
-        }
-      }
-    })
-  } catch (error) {
-    console.error('Erro no registro:', error)
-  } finally {
-    loading.value = false
-  }
+  form.post('/register', {
+    onSuccess: () => {
+      // Registro bem-sucedido
+      console.log('Conta criada com sucesso!')
+    },
+    onError: (formErrors) => {
+      // Os erros já são automaticamente atribuídos ao form.errors
+      console.error('Erros no registro:', formErrors)
+    },
+    onFinish: () => {
+      loading.value = false
+    }
+  })
 }
 </script>
 
