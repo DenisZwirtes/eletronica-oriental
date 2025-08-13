@@ -211,6 +211,9 @@ O sistema possui quatro tipos de usuários:
 
 ## 📖 Documentação
 
+### 🚀 Desenvolvimento
+- [Próximos Passos](./docs/proximos-passos.md) - Checklist de próximas funcionalidades e melhorias
+
 ### 🐳 Docker
 - [Setup e Instalação](./docs/docker/setup.md) - Configuração inicial do ambiente Docker
 - [Desenvolvimento](./docs/docker/development.md) - Comandos e scripts para desenvolvimento

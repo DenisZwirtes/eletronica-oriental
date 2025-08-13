@@ -114,13 +114,22 @@
             <span class="text-white font-medium">Novo Cliente</span>
           </button>
 
-          <button class="group flex items-center p-6 border border-white/20 rounded-xl hover:bg-white/20 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm">
+          <button @click="novaOrdem" class="group flex items-center p-6 border border-white/20 rounded-xl hover:bg-white/20 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm">
             <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg mr-4 group-hover:scale-110 transition-transform duration-300">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
               </svg>
             </div>
             <span class="text-white font-medium">Nova Ordem</span>
+          </button>
+
+          <button @click="listarOrdens" class="group flex items-center p-6 border border-white/20 rounded-xl hover:bg-white/20 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm">
+            <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg mr-4 group-hover:scale-110 transition-transform duration-300">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+            </div>
+            <span class="text-white font-medium">Ver Ordens</span>
           </button>
 
           <button class="group flex items-center p-6 border border-white/20 rounded-xl hover:bg-white/20 transition-all duration-300 transform hover:scale-105 backdrop-blur-sm">
@@ -147,7 +156,7 @@
 </template>
 
 <script setup>
-import { useForm } from '@inertiajs/vue3'
+import { useForm, router } from '@inertiajs/vue3'
 
 const props = defineProps({
   user: Object,
@@ -158,6 +167,14 @@ const form = useForm({})
 
 const logout = () => {
   form.post('/logout')
+}
+
+const novaOrdem = () => {
+  router.visit('/ordens-servico/create')
+}
+
+const listarOrdens = () => {
+  router.visit('/ordens-servico')
 }
 </script>
 

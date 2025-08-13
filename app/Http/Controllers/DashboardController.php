@@ -13,7 +13,7 @@ class DashboardController extends Controller
             'user' => \Illuminate\Support\Facades\Auth::user(),
             'stats' => [
                 'total_clientes' => \App\Models\Cliente::count(),
-                'ordens_abertas' => \App\Models\OrdemServico::where('status', 'aberta')->count(),
+                'ordens_abertas' => \App\Models\OrdemServico::whereIn('status', ['pendente', 'em_andamento'])->count(),
                 'orcamentos_pendentes' => \App\Models\Orcamento::where('status', 'pendente')->count(),
             ]
         ]);
