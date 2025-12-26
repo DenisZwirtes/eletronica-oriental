@@ -14,7 +14,7 @@ services:
       - ./:/var/www/html:cached
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:cached
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:cached
-      - .env.docker:/var/www/html/.env
+      - ./.env.docker:/var/www/html/.env:ro
     env_file:
       - .env.docker
     networks:

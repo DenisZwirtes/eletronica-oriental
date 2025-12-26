@@ -1,5 +1,21 @@
 # Stage 1: Composer dependencies
-FROM composer:2 as composer
+FROM dunglas/frankenphp:1-builder-php8.4.7 as composer
+
+# Instalar dependências do sistema e extensões PHP necessárias para o Composer
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    zip \
+    unzip \
+    && install-php-extensions gd zip
+
+# Instalar Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 COPY composer.json composer.lock ./
@@ -25,14 +41,17 @@ RUN apt-get update && apt-get install -y \
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Copiar dependências do stage composer
+COPY --from=composer /app/vendor /var/www/html/vendor
+
 # Configurar diretório de trabalho
 WORKDIR /var/www/html
 
 # Copiar arquivos do projeto
 COPY . .
 
-# Instalar dependências PHP
-RUN composer install --no-dev --no-scripts --optimize-autoloader
+# Gerar autoloader otimizado (dependências já foram instaladas no stage composer)
+RUN composer dump-autoload --optimize --no-dev
 
 # Configurar permissões
 RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache \
